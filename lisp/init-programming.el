@@ -1,14 +1,13 @@
 (use-package treesit-auto
-  :demand
   :hook
   (after-init . global-treesit-auto-mode)
   :init
-  (progn
-    (setq treesit-font-lock-level 4)
-    (add-to-list 'major-mode-remap-alist '(c++-mode . c-ts-mode))
-    (add-to-list 'major-mode-remap-alist '(html-mode . mhtml-mode))
-    (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
-    ))
+  (setq treesit-font-lock-level 4)
+  :config
+  (dolist (remap '((c++-mode . c-ts-mode)
+                  (html-mode . mhtml-mode)))
+          (add-to-list 'major-mode-remap-alist remap))
+  (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode)))
 
 (use-package eldoc-box
   :hook ((eglot-managed-mode . eldoc-box-hover-mode)
@@ -42,6 +41,15 @@
             :rev :newest
             :branch "main")
   :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+	      ("C-c" . copilot-accept-completion))
+  :custom (copilot-indent-offset-warning-disable t)
   :config
-  (define-key copilot-completion-map (kbd "C-c") 'copilot-accept-completion))
+  (add-to-list 'copilot-indentation-alist '(prog-mode . 2))
+  (add-to-list 'copilot-indentation-alist '(org-mode 2))
+  (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(yaml-mode . 2))
+  (add-to-list 'copilot-indentation-alist '(python-ts-mode . 4))
+  (add-to-list 'copilot-indentation-alist '(markdown-mode . 4)))
+
 (provide 'init-programming)
