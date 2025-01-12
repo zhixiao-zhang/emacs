@@ -6,30 +6,27 @@
 
 (global-auto-revert-mode t)
 (delete-selection-mode t)
+(electric-pair-mode t)
 (setq auto-save-default nil)
 (setq make-backup-files nil)
 
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
 (setq mouse-wheel-progressive-speed nil)
 
-(use-package smartparens
-  :ensure smartparens  ;; install the package
-  :hook (prog-mode text-mode markdown-mode) ;; add `smartparens-mode` to these hooks
-  :config
-  ;; load default config
-  (require 'smartparens-config))
-
 (use-package expand-region
   :bind ("C-=" . er/expand-region))
 
 (use-package exec-path-from-shell
-  :ensure t
   :if (memq window-system '(mac ns x))
+  :init
+  (setq exec-path-from-shell-shell-name "/opt/homebrew/bin/fish")
+  (setq exec-path-from-shell-variables'("PATH" "MANPATH" "LDFLAGS" "SDKROOT" "CPPFLAGS" "HOMEBREW_PREFIX" "HOMEBREW_CELLAR" "HOMEBREW_REPOSITORY" "INFOPATH"))
   :config
   (exec-path-from-shell-initialize))
 
 (use-package recentf
   :hook (after-init . recentf-mode)
+  :bind ("C-x b" . consult-buffer)
   :init
   (setq recentf-max-menu-items 10))
 
@@ -48,19 +45,18 @@
 (use-package orderless
   :init
   (setq completion-styles '(orderless)
-	completion-category-overrides '((file (styles partial-completion)))))
+        completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package marginalia
   :hook (after-init . marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
-
 (use-package embark
   :bind
   ("C-;" . embark-act)
   (:map minibuffer-local-map
-	("C-c C-e" . embark-export-write))
+    ("C-c C-e" . embark-export-write))
   :config
   (setq prefix-help-command #'embark-prefix-help-command))
 
@@ -83,15 +79,21 @@
   (require 'embark)
   (require 'wgrep)
   (pcase-let ((`(,type . ,candidates)
-	       (run-hook-with-args-until-success 'embark-candidate-collectors)))
+              (run-hook-with-args-until-success 'embark-candidate-collectors)))
     (pcase type
       ('consult-grep (let ((embark-after-export-hook #'wgrep-change-to-wgrep-mode))
-		       (embark-export)))
+        (embark-export)))
       ('file (let ((embark-after-export-hook #'wdired-change-to-wdired-mode))
-	       (embark-export)))
+        (embark-export)))
       ('consult-location (let ((embark-after-export-hook #'occur-edit-mode))
-	       (embark-export)))
+        (embark-export)))
       (x (user-error "embark category %s doesn't support writable export" x)))))
+
+(setq-default tab-width 2)
+(setq-default indent-tabs-mode nil)
+
+(pixel-scroll-mode 1)
+(global-display-line-numbers-mode t)
 
 (use-package magit
   :with "git"

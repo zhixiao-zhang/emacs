@@ -4,7 +4,7 @@
       frame-inhibit-implied-resize t
       frame-resize-pixelwise t
       default-frame-alist '((width . 150)
-                            (height . 50)
+                            (height . 80)
                             (vertical-scroll-bar . nil)
                             (horizontal-scroll-bar . nil)
                             (ns-transparent-titlebar t)))

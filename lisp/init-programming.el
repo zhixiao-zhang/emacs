@@ -4,8 +4,7 @@
   :init
   (setq treesit-font-lock-level 4)
   :config
-  (dolist (remap '((c++-mode . c-ts-mode)
-                  (html-mode . mhtml-mode)))
+  (dolist (remap '((html-mode . mhtml-mode)))
           (add-to-list 'major-mode-remap-alist remap))
   (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode)))
 
@@ -15,9 +14,19 @@
 
 (use-package eglot
   :hook ((c-ts-mode c++-ts-mode) . eglot-ensure)
-  :config (with-eval-after-load 'eglot            (dolist (mode-server '((c-ts-mode . ("clangd" "--header-insertion=never"))
-                                   (c++-ts-mode . ("clangd" "--header-insertion=never"))))
-              (add-to-list 'eglot-server-programs mode-server))))
+  :config
+  (with-eval-after-load 'eglot
+    (let ((clangd-args '("clangd"
+       "--background-index"
+       "--clang-tidy"
+       "--log=verbose"
+       "--clang-tidy-checks=performance-*,bugprone-*"
+       "--all-scopes-completion"
+       "--completion-style=detailed"
+       "--header-insertion=iwyu"
+       "--pch-storage=disk")))
+    (dolist (mode '(c-ts-mode c++-ts-mode))
+             (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
 
 (use-package corfu
   :hook (after-init . global-corfu-mode)
@@ -36,20 +45,7 @@
 (use-package yasnippet
   :hook (prog-mode . yas-minor-mode))
 
-(use-package copilot
-  :vc (:url "https://github.com/copilot-emacs/copilot.el"
-            :rev :newest
-            :branch "main")
-  :hook (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-	      ("C-c" . copilot-accept-completion))
-  :custom (copilot-indent-offset-warning-disable t)
-  :config
-  (add-to-list 'copilot-indentation-alist '(prog-mode . 2))
-  (add-to-list 'copilot-indentation-alist '(org-mode 2))
-  (add-to-list 'copilot-indentation-alist '(text-mode 2))
-  (add-to-list 'copilot-indentation-alist '(yaml-mode . 2))
-  (add-to-list 'copilot-indentation-alist '(python-ts-mode . 4))
-  (add-to-list 'copilot-indentation-alist '(markdown-mode . 4)))
+(add-to-list 'c-default-style '(c-ts-mode . "llvm.org"))
+(add-to-list 'c-default-style '(c++-ts-mode . "llvm.org"))
 
 (provide 'init-programming)

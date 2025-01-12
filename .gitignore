@@ -6,3 +6,4 @@ tree-sitter
 .cache
 projects
 transient
+eshell
