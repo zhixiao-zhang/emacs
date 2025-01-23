@@ -2,6 +2,8 @@
                     :family "FiraCode Nerd Font"
                     :height 180)
 
+(load-theme 'whiteboard)
+
 (use-package dashboard
   :ensure t
   :config

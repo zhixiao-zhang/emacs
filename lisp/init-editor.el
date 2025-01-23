@@ -99,4 +99,9 @@
   :with "git"
   :defer t)
 
+(setq org-startup-truncated nil)
+
+(use-package htmlize
+  :defer t)
+
 (provide 'init-editor)

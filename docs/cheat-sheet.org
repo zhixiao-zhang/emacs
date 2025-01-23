@@ -1,0 +1,53 @@
+*  Cheat Sheet
+
+** Org
+
+/italics/
+
++delete+
+
+_underscore_
+
+*bold*
+
+This is a orderless table:
+  - item 1
+  - item 2
+
+This is a order table:
+  1. item 1
+  2. item 2
+
+
+#+BEGIN_QUOTE
+This is a quote.
+#+END_QUOTE
+
+#+BEGIN_SRC
+  int main() {
+    printf("test\n");
+
+    return 0;
+  }
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+This is an example.
+#+END_EXAMPLE
+
+| name | phone number | age |
+| zzx  |        12345 |  22 |
+
+** Magit
+
+=q= to quit the status buffer
+
+=g= to refresh it
+
+#+BEGIN_QUOTE
+If you keep the status buffer on and edit another buffer, you are supposed to refersh it using =g=.
+#+END_QUOTE
+
+=C-n= =n= =M-n=
+
+=C-p= =p= =M-p=
