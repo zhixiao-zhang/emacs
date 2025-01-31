@@ -1,8 +1,10 @@
 (set-face-attribute 'default nil
-                    :family "FiraCode Nerd Font"
-                    :height 180)
+                    :family "Iosevka Nerd Font"
+                    :height 200)
 
-(load-theme 'whiteboard)
+(use-package solarized-theme)
+
+(load-theme 'solarized-light t)
 
 (use-package dashboard
   :ensure t
