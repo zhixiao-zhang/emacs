@@ -217,8 +217,11 @@
   "Compile the project in a vterm terminal at DIR.
 If DIR is provided, switch to it before compilation."
   (interactive)
-  (let* ((command compile-command))
-    (setq compile-command (compilation-read-command command))
+  (let* ((command compile-command)
+         (buffer-name (if dir
+                          (format "*vterm %s compilation*" (file-name-nondirectory (directory-file-name dir)))
+                        "*vterm compilation*")))
+         (setq compile-command (compilation-read-command command))
     (if (get-buffer buffer-name)
         (switch-to-buffer buffer-name)
       (with-current-buffer (vterm)
@@ -226,9 +229,7 @@ If DIR is provided, switch to it before compilation."
           (vterm-send-string (concat "cd " dir))
           (vterm-send-return))
       (setq vterm-compile-buffer (current-buffer))
-      (rename-buffer (if dir
-                         (format "*vterm %s compilation*" (file-name-nondirectory (directory-file-name dir)))
-                       "*vterm compilation*"))
+      (rename-buffer buffer-name)
       (compilation-shell-minor-mode 1)
       (vterm-send-M-w)
       (vterm-send-string compile-command t)
