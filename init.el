@@ -232,7 +232,7 @@ If DIR is provided, switch to it before compilation."
       (compilation-shell-minor-mode 1)
       (vterm-send-M-w)
       (vterm-send-string compile-command t)
-      (vterm-send-return))))
+      (vterm-send-return)))))
 
 (defun project-vterm-compile ()
   "Compile the project in a vterm terminal at the project's root."
