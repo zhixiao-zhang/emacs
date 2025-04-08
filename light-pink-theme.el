@@ -59,8 +59,8 @@
 
 ;; web-mode
 `(web-mode-string-face ((t (:foreground ,color12 ))))
-`(Web-mode-html-tag-face ((t (:foreground ,color11 ))))
-`(web-mode-html-tag-bracket-face ((t (:foreground ,color11 ))))
+`(web-mode-html-tag-face ((t (:foreground ,color13 ))))
+`(web-mode-html-tag-bracket-face ((t (:foreground ,color17 ))))
 
 
 ;; org-mode
