@@ -175,17 +175,6 @@
   (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
   (with-eval-after-load 'c++-ts-mode))
 
-(use-package eldoc-box
-  :defer t
-  :hook ((eglot-managed-mode . eldoc-box-hover-mode)
-         (eldoc-mode . eldoc-box-hover-mode))
-  :config
-  (set-face-attribute 'eldoc-box-body nil
-                      :foreground "#000000"
-                      :background "#FEF3C7")
-  (setq eldoc-box-max-pixel-width 500)
-  (setq eldoc-box-max-pixel-height 300))
-
 (use-package eglot
   :defer t
   :hook ((c-ts-mode c++-ts-mode python-ts-mode) . eglot-ensure)
@@ -204,6 +193,12 @@
        "--pch-storage=disk")))
     (dolist (mode '(c-ts-mode c++-ts-mode))
       (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
+
+(use-package eldoc
+  :defer t
+  :init (setq eldoc-echo-area-display-truncation-message nil
+              eldoc-echo-area-use-multiline-p nil
+              eldoc-echo-area-prefer-doc-buffer 'maybe))
 
 (use-package web-mode
   :defer t
@@ -256,10 +251,8 @@
   :defer t
   :init (setq markdown-enable-math t
               markdown-hide-urls t
-              markdown-fontify-code-blocks-natively t))
-
-(with-eval-after-load 'markdown-mode
-  (set-face-underline 'markdown-line-break-face nil))
+              markdown-fontify-code-blocks-natively t)
+  :config (set-face-underline 'markdown-line-break-face nil))
 
 (use-package dashboard
   :config
