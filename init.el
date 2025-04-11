@@ -270,64 +270,10 @@
                                   dashboard-insert-newline
                                   dashboard-insert-init-info))
   (setq dashboard-banner-logo-title "你枉读诗书习经典，岂不知非礼勿能言。")
-  (setq dashboard-startup-banner "~/Pictures/dlma.png"))
+  (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
 
-(use-package vterm
-  :defer t
-  :hook (vterm-mode . (lambda ()
-                         (setq-local global-hl-line-mode nil)
-                         (setq cursor-type 'bar))))
-
-(defvar vterm-compile-buffer nil)
-(defun vterm-compile (&optional dir)
-  "Compile the project in a vterm terminal at DIR.
-If DIR is provided, switch to it before compilation."
-  (interactive)
-  (let* ((command compile-command)
-         (buffer-name (if dir
-                          (format "*vterm %s compilation*" (file-name-nondirectory (directory-file-name dir)))
-                        "*vterm compilation*")))
-         (setq compile-command (compilation-read-command command))
-    (if (get-buffer buffer-name)
-        (switch-to-buffer buffer-name)
-      (with-current-buffer (vterm)
-        (when dir
-          (vterm-send-string (concat "cd " dir))
-          (vterm-send-return))
-      (setq vterm-compile-buffer (current-buffer))
-      (rename-buffer buffer-name)
-      (compilation-shell-minor-mode 1)
-      (vterm-send-M-w)
-      (vterm-send-string compile-command t)
-      (vterm-send-return)))))
-
-(defun project-vterm-compile ()
-  "Compile the project in a vterm terminal at the project's root."
-  (interactive)
-  (let* ((root (project-root (project-current t))))
-    (vterm-compile root)))
-
-(defun project-vterm ()
-  "Open a `vterm` buffer in current project root dir"
-  (interactive)
-  (let* ((pr (project-current t))
-         (root (project-root pr))
-         (buffer-name (format "*vterm - %s*" (project-name pr))))
-    (if (get-buffer buffer-name)
-        (switch-to-buffer buffer-name)
-      (with-current-buffer (vterm (generate-new-buffer-name buffer-name))
-        (vterm-send-string (concat "cd " root))
-        (vterm-send-return)))))
-
-(define-key project-prefix-map (kbd "v") #'project-vterm)
-(define-key project-prefix-map (kbd "c") #'project-vterm-compile)
-
-(with-eval-after-load 'project
-  (define-key project-prefix-map "v" #'project-vterm)
-  (add-to-list 'project-switch-commands '(project-vterm "vterm") t)
-  (setq project-switch-commands
-        (cl-remove-if
-         (lambda (command) (memq (car-safe command) '(project-eshell project-vc-dir project-any-command)))
-         project-switch-commands)))
+(use-package magit
+  :with "git"
+  :defer t)
 
 (setq custom-file (make-temp-file "custom.el"))
