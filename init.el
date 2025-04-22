@@ -1,13 +1,15 @@
 (when (display-graphic-p)
-  (cond
-   ((eq system-type 'darwin)
-    (set-frame-font "SF Mono-18" t t))
-   ((eq system-type 'gnu/linux)
-    (set-frame-font "SFMono Nerd Font Mono-18" t t))))
-
-(when (member "LXGW WenKai" (font-family-list))
-  (dolist (charset '(kana han cjk-misc bopomofo))
-    (set-fontset-font t charset (font-spec :family "LXGW WenKai" :size 18))))
+  (let* ((font-size 18)
+         (latin-font (cond ((eq system-type 'darwin) "SF Mono")
+                           ((eq system-type 'gnu/linux) "SFMono")
+                           (t nil)))
+         (cjk-font (when (member "LXGW WenKai" (font-family-list))
+                     "LXGW WenKai")))
+    (when latin-font
+      (set-frame-font (format "%s-%d" latin-font font-size) t t))
+    (when cjk-font
+      (dolist (charset '(kana han cjk-misc bopomofo))
+        (set-fontset-font t charset (font-spec :family cjk-font :size font-size))))))
 
 (load "~/.emacs.d/light-pink-theme.el")
 (load-theme 'light-pink t)
@@ -92,10 +94,10 @@
 
 (global-set-key (kbd "C-c i") 'open-init-file)
 (global-set-key (kbd "C-c d") 'my-delete-space-to-next-char)
-(global-set-key (kbd "C-c b") 'windmove-left)
+(global-set-key (kbd "C-c h") 'windmove-left)
 (global-set-key (kbd "C-c n") 'windmove-down)
 (global-set-key (kbd "C-c p") 'windmove-up)
-(global-set-key (kbd "C-c f") 'windmove-right)
+(global-set-key (kbd "C-c l") 'windmove-right)
 (global-set-key (kbd "M-《") 'beginning-of-buffer)
 (global-set-key (kbd "M-》") 'end-of-buffer)
 
@@ -138,30 +140,15 @@
          ("M-=" . er/mark-inside-pairs)
          ("C-M-=" . er/mark-inside-quotes)))
 
-(use-package vertico
-  :defer t
-  :hook (after-init . vertico-mode)
-  :init
-  (defun crm-indicator (args)
-    (cons (format "[CRM%s] %s"
-                  (replace-regexp-in-string
-                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-                   crm-separator)
-                  (car args))
-          (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator))
+(use-package icomplete
+  :config
+  (icomplete-mode t))
 
 (use-package orderless
   :defer t
   :init
   (setq completion-styles '(orderless)
         completion-category-overrides '((file (styles partial-completion)))))
-
-(use-package marginalia
-  :defer t
-  :hook (after-init . marginalia-mode)
-  :bind (:map minibuffer-local-map
-              ("M-A" . marginalia-cycle)))
 
 (use-package treesit-auto
   :defer t
@@ -171,7 +158,7 @@
   (setq treesit-font-lock-level 4)
   :config
   (dolist (remap '((html-mode . mhtml-mode)))
-          (add-to-list 'major-mode-remap-alist remap))
+    (add-to-list 'major-mode-remap-alist remap))
   (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
   (with-eval-after-load 'c++-ts-mode))
 
@@ -184,29 +171,26 @@
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio")))
   (with-eval-after-load 'eglot
     (let ((clangd-args '("clangd"
-       "--background-index"
-       "--clang-tidy"
-       "--clang-tidy-checks=performance-*,bugprone-*"
-       "--all-scopes-completion"
-       "--completion-style=detailed"
-       "--header-insertion=iwyu"
-       "--pch-storage=disk")))
-    (dolist (mode '(c-ts-mode c++-ts-mode))
-      (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
+                         "--background-index"
+                         "--clang-tidy"
+                         "--clang-tidy-checks=performance-*,bugprone-*"
+                         "--all-scopes-completion"
+                         "--completion-style=detailed"
+                         "--header-insertion=iwyu"
+                         "--pch-storage=disk")))
+      (dolist (mode '(c-ts-mode c++-ts-mode))
+        (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
 
-(use-package eldoc
+(use-package eldoc-box
   :defer t
-  :init (setq eldoc-echo-area-display-truncation-message nil
-              eldoc-echo-area-use-multiline-p nil
-              eldoc-echo-area-prefer-doc-buffer 'maybe))
-
-(use-package web-mode
-  :defer t
-  :mode ("\\.html?\\'")
+  :hook ((eglot-managed-mode . eldoc-box-hover-mode)
+         (eldoc-mode . eldoc-box-hover-mode))
   :config
-  (setq web-mode-markup-indent-offset 2)
-  (setq web-mode-code-indent-offset 2)
-  (setq web-mode-css-indent-offset 2))
+  (set-face-attribute 'eldoc-box-body nil
+                      :foreground "#000000"
+                      :background "#FEF3C7")
+  (setq eldoc-box-max-pixel-width 500)
+  (setq eldoc-box-max-pixel-height 300))
 
 (use-package corfu
   :defer t
@@ -236,9 +220,9 @@
 
 (use-package cc-mode
   :hook ((c-ts-mode . (lambda ()
-                         (add-to-list 'c-default-style '(c-ts-mode . "llvm.org"))))
+                        (add-to-list 'c-default-style '(c-ts-mode . "llvm.org"))))
          (c++-ts-mode . (lambda ()
-                         (add-to-list 'c-default-style '(c++-ts-mode . "llvm.org")))))
+                          (add-to-list 'c-default-style '(c++-ts-mode . "llvm.org")))))
   :config
   (require 'llvm))
 
@@ -258,15 +242,30 @@
   :config
   (dashboard-setup-startup-hook)
   (setq dashboard-startupify-list '(dashboard-insert-banner
-                                  dashboard-insert-newline
-                                  dashboard-insert-banner-title
-                                  dashboard-insert-newline
-                                  dashboard-insert-init-info))
+                                    dashboard-insert-newline
+                                    dashboard-insert-banner-title
+                                    dashboard-insert-newline
+                                    dashboard-insert-init-info))
   (setq dashboard-banner-logo-title "你枉读诗书习经典，岂不知非礼勿能言。")
   (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
 
 (use-package magit
   :with "git"
   :defer t)
+
+(use-package auctex
+  :with "luatex"
+  :defer t
+  :init
+  (setq-default TeX-engine 'luatex)
+  (setq TeX-check-TeX nil
+        TeX-parse-self t
+        TeX-source-correlate-method 'synctex
+        TeX-source-correlate-mode t
+        TeX-view-program-list '(("Skim" "open -a Skim.app %o"))))
+
+(use-package ox-hugo
+  :pin melpa
+  :after ox)
 
 (setq custom-file (make-temp-file "custom.el"))
