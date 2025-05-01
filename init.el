@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 (when (display-graphic-p)
   (let* ((font-size 18)
          (latin-font (cond ((eq system-type 'darwin) "SF Mono")

@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 (setq read-process-output-max (* 4 1024 1024)
       display-time-load-average nil
       process-adaptive-read-buffering nil

@@ -1,4 +1,4 @@
-
+;; -*- lexical-binding: t; -*-
 ;; If you are distributing this theme, please replace this comment
 ;; with the appropriate license attributing the original VS Code
 ;; theme author.

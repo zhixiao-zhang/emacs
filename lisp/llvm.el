@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 ;; LLVM coding style guidelines in emacs
 ;; Maintainer: LLVM Team, http://llvm.org/
 

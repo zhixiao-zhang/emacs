@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (setq org-capture-templates
       '(("m" "meeting" entry
          (file+headline "~/Documents/meetings.org" "Meeting Notes")
