@@ -15,68 +15,53 @@
 (load "~/.emacs.d/light-pink-theme.el")
 (load-theme 'light-pink t)
 
-(setq mode-line-right-align-edge 'right-margin)
+(setq mode-line-space " "
+      mode-line-modes '("ⓐ")
+      mode-line-lighter '((corfu-mode . "ⓒ")
+                          (diff-hl-mode . "ⓗ")
+                          (eldoc-mode . "ⓔ")
+                          (flymake-mode . "ⓜ")
+                          (flyspell-mode . "ⓢ")
+                          (visual-line-mode . "ⓥ")
+                          (whitespace-mode . "ⓦ")
+                          (yas-minor-mode . "ⓨ")))
 
-(defun mode-line-compose (indicator buffer preamble postamble)
-  (list `(:propertize ,indicator face (:foreground "#F5F5F5" :background "#E17092"))
-        `(:propertize ,buffer face (:foreground "#9466AA"))
-        'mode-line-format-right-align
-        `(:propertize ,preamble face (:foreground "#C46B81"))
-        '(:propertize "<<" face (:foreground "#AAAAAA"))
-        `(:propertize ,postamble face ((:foreground "#E17092") bold))))
+(dolist (mapping mode-line-lighter)
+  (let ((mode (intern (symbol-name (car mapping))))
+        (lighter (cdr mapping)))
+    (push `(,mode ,lighter) mode-line-modes)))
 
-(defun mode-line-default ()
-  (let ((indicator '(" " (:eval (cond ((and buffer-file-name (buffer-modified-p)) "RW")
-                                      (buffer-read-only "RO")
-                                      (t "WR"))) " "))
-        (buffer '(" %b "))
-        (preamble '((-3 "%p") " %l:%c "))
-        (postamble '(" %[" mode-name "%] ")))
-    (mode-line-compose indicator buffer preamble postamble)))
+(defun mode-line-compose (left right)
+  `(:eval (let* ((left (format-mode-line ',left))
+                 (right (format-mode-line ',right))
+                 (glue (- (window-pixel-width)
+                          (string-pixel-width left)
+                          (string-pixel-width right))))
+            `(,(string-replace "%" "%%" left)
+              ,(propertize " " 'display
+                           `(space :ascent 76
+                                   :height 1.4
+                                   :width (,(max 0 glue))))
+              ,(string-replace "%" "%%" right)))))
 
-(setq-default mode-line-format (mode-line-default))
+(setq-default mode-line-format (mode-line-compose
+                                (list mode-line-space
+                                      mode-line-mule-info
+                                      mode-line-modified
+                                      mode-line-space
+                                      '(:propertize "%b" face bold))
+                                (list '(:propertize mode-name face bold)
+                                      mode-line-space
+                                      mode-line-modes
+                                      mode-line-space)))
 
-(defun adjust-frame-opacity (frame delta)
-  (let* ((alpha (or (frame-parameter frame 'alpha) 100))
-         (alpha (if (listp alpha) (car alpha) alpha))
-         (alpha (+ alpha delta)))
-    (when (and (<= frame-alpha-lower-limit alpha)
-               (>= 100 alpha))
-      (set-frame-parameter frame 'alpha alpha))))
-
-(defun frame-perspective ()
-  (interactive)
-  (dolist (frame (frame-list))
-    (adjust-frame-opacity frame -40))
-  (read-event)
-  (when last-input-event
-    (dolist (frame (frame-list))
-      (adjust-frame-opacity frame 40))))
-
-(keymap-global-set "M-RET" 'frame-perspective)
-
-(setq auto-save-default nil
-      make-backup-files nil
-      mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))
       mouse-wheel-progressive-speed nil
-      inhibit-startup-screen t
-      inhibit-compacting-font-caches t)
+      backup-directory-alist `((".*" . ,temporary-file-directory))
+      auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
 (setq-default indent-tabs-mode nil
               tab-width 2)
-
-(setq word-wrap-by-category t)
-(select-frame-set-input-focus (selected-frame))
-
-(add-hook 'prog-mode-hook 'hl-line-mode)
-(add-hook 'text-mode-hook 'hl-line-mode)
-
-(defun text-mode-refine ()
-  (setq-local corfu-auto nil)
-  (visual-line-mode))
-
-(add-hook 'text-mode-hook
-          'text-mode-refine)
 
 (global-auto-revert-mode t)
 (electric-pair-mode t)
@@ -182,16 +167,11 @@
       (dolist (mode '(c-ts-mode c++-ts-mode))
         (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
 
-(use-package eldoc-box
-  :defer t
-  :hook ((eglot-managed-mode . eldoc-box-hover-mode)
-         (eldoc-mode . eldoc-box-hover-mode))
-  :config
-  (set-face-attribute 'eldoc-box-body nil
-                      :foreground "#000000"
-                      :background "#FEF3C7")
-  (setq eldoc-box-max-pixel-width 500)
-  (setq eldoc-box-max-pixel-height 300))
+(use-package eldoc
+  :hook (after-init . global-eldoc-mode)
+  :init (setq eldoc-echo-area-display-truncation-message nil
+              eldoc-echo-area-use-multiline-p nil
+              eldoc-echo-area-prefer-doc-buffer 'maybe))
 
 (use-package corfu
   :defer t
@@ -268,5 +248,51 @@
 (use-package ox-hugo
   :pin melpa
   :after ox)
+
+(defvar point-stack nil)
+
+(defun point-stack-push ()
+  "Push current point in stack."
+  (interactive)
+  (message "Location marked.")
+  (setq point-stack (cons (list (current-buffer) (point)) point-stack)))
+
+(defun point-stack-pop ()
+  "Pop point from stack."
+  (interactive)
+  (if (null point-stack)
+      (message "Stack is empty.")
+    (switch-to-buffer (caar point-stack))
+    (goto-char (cadar point-stack))
+    (setq point-stack (cdr point-stack))))
+
+(global-set-key (kbd "M-i") 'point-stack-push)
+(global-set-key (kbd "M-o") 'point-stack-pop)
+
+(use-package flymake
+  :ensure nil
+  :init (define-fringe-bitmap 'flymake-fringe-indicator
+          (vector #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00011100
+                  #b00111110
+                  #b00111110
+                  #b00111110
+                  #b00011100
+                  #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00000000
+                  #b00000000))
+  :config (setq flymake-indicator-type 'fringes
+                flymake-note-bitmap '(flymake-fringe-indicator compilation-info)
+                flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
+                flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
+
 
 (setq custom-file (make-temp-file "custom.el"))

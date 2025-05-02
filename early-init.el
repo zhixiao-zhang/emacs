@@ -1,15 +1,16 @@
 ;; -*- lexical-binding: t; -*-
-(setq read-process-output-max (* 4 1024 1024)
-      display-time-load-average nil
-      process-adaptive-read-buffering nil
+(setq window-resize-pixelwise t
+      inhibit-startup-screen t
+      inhibit-startup-echo-area-message user-login-name
       frame-inhibit-implied-resize t
       frame-resize-pixelwise t
-      default-frame-alist '((width . 150)
-			                      (height . 50)
+      use-dialog-box nil
+      default-frame-alist '((width . 170)
+                            (height . 60)
+                            (horizontal-scroll-bar . nil)
 			                      (vertical-scroll-bar . nil)
 			                      (ns-transparent-titlebar t)))
-
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
+(setopt menu-bar-mode nil
+        scroll-bar-mode nil
+        tool-bar-mode nil
+        tooltip-mode nil)
