@@ -235,10 +235,10 @@
   :defer t)
 
 (use-package auctex
-  :with "luatex"
+  :with "xetex"
   :defer t
   :init
-  (setq-default TeX-engine 'luatex)
+  (setq-default TeX-engine 'xetex)
   (setq TeX-check-TeX nil
         TeX-parse-self t
         TeX-source-correlate-method 'synctex
@@ -248,26 +248,6 @@
 (use-package ox-hugo
   :pin melpa
   :after ox)
-
-(defvar point-stack nil)
-
-(defun point-stack-push ()
-  "Push current point in stack."
-  (interactive)
-  (message "Location marked.")
-  (setq point-stack (cons (list (current-buffer) (point)) point-stack)))
-
-(defun point-stack-pop ()
-  "Pop point from stack."
-  (interactive)
-  (if (null point-stack)
-      (message "Stack is empty.")
-    (switch-to-buffer (caar point-stack))
-    (goto-char (cadar point-stack))
-    (setq point-stack (cdr point-stack))))
-
-(global-set-key (kbd "M-i") 'point-stack-push)
-(global-set-key (kbd "M-o") 'point-stack-pop)
 
 (use-package flymake
   :ensure nil
@@ -294,5 +274,6 @@
                 flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
                 flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
 
+(require 'ai-wrapper)
 
 (setq custom-file (make-temp-file "custom.el"))
