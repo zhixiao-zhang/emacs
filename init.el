@@ -15,46 +15,6 @@
 (load "~/.emacs.d/light-pink-theme.el")
 (load-theme 'light-pink t)
 
-(setq mode-line-space " "
-      mode-line-modes '("ⓐ")
-      mode-line-lighter '((corfu-mode . "ⓒ")
-                          (diff-hl-mode . "ⓗ")
-                          (eldoc-mode . "ⓔ")
-                          (flymake-mode . "ⓜ")
-                          (flyspell-mode . "ⓢ")
-                          (visual-line-mode . "ⓥ")
-                          (whitespace-mode . "ⓦ")
-                          (yas-minor-mode . "ⓨ")))
-
-(dolist (mapping mode-line-lighter)
-  (let ((mode (intern (symbol-name (car mapping))))
-        (lighter (cdr mapping)))
-    (push `(,mode ,lighter) mode-line-modes)))
-
-(defun mode-line-compose (left right)
-  `(:eval (let* ((left (format-mode-line ',left))
-                 (right (format-mode-line ',right))
-                 (glue (- (window-pixel-width)
-                          (string-pixel-width left)
-                          (string-pixel-width right))))
-            `(,(string-replace "%" "%%" left)
-              ,(propertize " " 'display
-                           `(space :ascent 76
-                                   :height 1.4
-                                   :width (,(max 0 glue))))
-              ,(string-replace "%" "%%" right)))))
-
-(setq-default mode-line-format (mode-line-compose
-                                (list mode-line-space
-                                      mode-line-mule-info
-                                      mode-line-modified
-                                      mode-line-space
-                                      '(:propertize "%b" face bold))
-                                (list '(:propertize mode-name face bold)
-                                      mode-line-space
-                                      mode-line-modes
-                                      mode-line-space)))
-
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))
       mouse-wheel-progressive-speed nil
       backup-directory-alist `((".*" . ,temporary-file-directory))
@@ -87,28 +47,12 @@
 (global-set-key (kbd "M-《") 'beginning-of-buffer)
 (global-set-key (kbd "M-》") 'end-of-buffer)
 
-(defun env-flush ()
-  (let* ((shell (or (getenv "SHELL") "/bin/sh"))
-         (command (format "%s -l -c 'env'" shell)))
-    (with-temp-buffer
-      (call-process-shell-command command nil t)
-      (goto-char (point-min))
-      (while (re-search-forward "^\\([^=]+\\)=\\(.*\\)$" nil t)
-        (when-let* ((variable (match-string 1))
-                    (value (match-string 2)))
-          (when (string= variable "PATH")
-            (setenv variable value)
-            (setq exec-path (split-string value path-separator))))))))
-
 (with-eval-after-load 'package
 	(add-to-list 'package-archives
 							 '("melpa" . "https://melpa.org/packages/")))
 
 (eval-when-compile
 	(require 'use-package))
-
-(with-eval-after-load 'use-package
-  (env-flush))
 
 (define-advice use-package
     (:around (orig package &rest body) use-with-binary)
@@ -125,10 +69,6 @@
   :bind (("C-=" . er/expand-region)
          ("M-=" . er/mark-inside-pairs)
          ("C-M-=" . er/mark-inside-quotes)))
-
-(use-package icomplete
-  :config
-  (icomplete-mode t))
 
 (use-package orderless
   :defer t
@@ -230,10 +170,6 @@
   (setq dashboard-banner-logo-title "你枉读诗书习经典，岂不知非礼勿能言。")
   (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
 
-(use-package magit
-  :with "git"
-  :defer t)
-
 (use-package auctex
   :with "xetex"
   :defer t
@@ -274,6 +210,46 @@
                 flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
                 flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
 
-(require 'ai-wrapper)
+(use-package gptel
+  :defer t
+  :bind ("C-c ," . gptel-send)
+  :config
+  (setq gptel-default-mode 'org-mode)
+  (setq gptel-model 'deepseek-chat
+        gptel-backend (gptel-make-deepseek "DeepSeek"
+                        :stream t
+                        :key ""))
+  (setq gptel-directives '((rewrite . gptel--rewrite-directive-default)
+                           (default . "You are a large language model living in Emacs and a helpful assistant. Respond concisely. If the question is in Chinese, please reply in Chinese.")
+                          (programming . "You are a large language model and an awesome programmer. Provide code and only code as output without any additional text, prompt or note.")
+                          (writing . "You are a large language model and a writing assistant. Respond concisely.")
+                          (chat . "You are a conversation partner. Respond concisely. If the question is in Chinese, please reply in Chinese."))))
+
+(use-package nov
+  :defer t)
+
+(use-package olivetti
+  :defer t)
+
+(use-package emms
+  :defer t
+  :config
+  (emms-all)
+  (setq emms-player-list '(emms-player-mpv)
+        emms-info-functions '(emms-info-native)))
+
+(use-package marginalia
+  :hook (after-init . marginalia-mode))
+
+(use-package vertico
+  :hook (after-init . vertico-mode))
+
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
+  :config
+  (exec-path-from-shell-initialize))
+
+(use-package color-rg
+  :load-path "~/.emacs.d/color-rg")
 
 (setq custom-file (make-temp-file "custom.el"))
