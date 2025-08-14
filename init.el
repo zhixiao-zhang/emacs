@@ -1,16 +1,22 @@
 ;; -*- lexical-binding: t; -*-
-(when (display-graphic-p)
-  (let* ((font-size 18)
-         (latin-font (cond ((eq system-type 'darwin) "SF Mono")
-                           ((eq system-type 'gnu/linux) "SFMono")
-                           (t nil)))
-         (cjk-font (when (member "LXGW WenKai" (font-family-list))
-                     "LXGW WenKai")))
-    (when latin-font
-      (set-frame-font (format "%s-%d" latin-font font-size) t t))
-    (when cjk-font
-      (dolist (charset '(kana han cjk-misc bopomofo))
-        (set-fontset-font t charset (font-spec :family cjk-font :size font-size))))))
+(defun my/apply-font-settings (frame)
+  (with-selected-frame frame
+    (when (display-graphic-p)
+      (let* ((font-size 19)
+             (latin-font (cond ((eq system-type 'darwin) "SF Mono")
+                               ((eq system-type 'gnu/linux) "SFMono")
+                               (t nil)))
+             (cjk-font (when (member "LXGW WenKai" (font-family-list))
+                         "LXGW WenKai")))
+        (when latin-font
+          (set-frame-font (format "%s-%d" latin-font font-size) t t))
+        (when cjk-font
+          (dolist (charset '(kana han cjk-misc bopomofo))
+            (set-fontset-font t charset (font-spec :family cjk-font :size font-size))))))))
+
+(add-hook 'after-make-frame-functions #'my/apply-font-settings)
+
+(my/apply-font-settings (selected-frame))
 
 (load "~/.emacs.d/light-pink-theme.el")
 (load-theme 'light-pink t)
@@ -181,10 +187,6 @@
         TeX-source-correlate-mode t
         TeX-view-program-list '(("Skim" "open -a Skim.app %o"))))
 
-(use-package ox-hugo
-  :pin melpa
-  :after ox)
-
 (use-package flymake
   :ensure nil
   :init (define-fringe-bitmap 'flymake-fringe-indicator
@@ -210,27 +212,6 @@
                 flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
                 flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
 
-(use-package gptel
-  :defer t
-  :bind ("C-c ," . gptel-send)
-  :config
-  (setq gptel-default-mode 'org-mode)
-  (setq gptel-model 'deepseek-chat
-        gptel-backend (gptel-make-deepseek "DeepSeek"
-                        :stream t
-                        :key ""))
-  (setq gptel-directives '((rewrite . gptel--rewrite-directive-default)
-                           (default . "You are a large language model living in Emacs and a helpful assistant. Respond concisely. If the question is in Chinese, please reply in Chinese.")
-                          (programming . "You are a large language model and an awesome programmer. Provide code and only code as output without any additional text, prompt or note.")
-                          (writing . "You are a large language model and a writing assistant. Respond concisely.")
-                          (chat . "You are a conversation partner. Respond concisely. If the question is in Chinese, please reply in Chinese."))))
-
-(use-package nov
-  :defer t)
-
-(use-package olivetti
-  :defer t)
-
 (use-package emms
   :defer t
   :config
@@ -249,7 +230,46 @@
   :config
   (exec-path-from-shell-initialize))
 
-(use-package color-rg
-  :load-path "~/.emacs.d/color-rg")
+(use-package magit
+  :defer t)
+
+(use-package valign
+  :defer t)
+
+(use-package org :load-path "~/.emacs.d/elpa/org-mode/lisp/"
+  :config
+  (org-latex-preview-auto-mode))
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (org . t)
+   (lilypond . t)))
+
+(setq org-babel-lilypond-commands
+      '("/opt/homebrew/bin/lilypond" "open" "open"))
+
+(setq org-babel-lilypond-ly-command
+      "/opt/homebrew/bin/lilypond")
+
+(defun kill-buffers-matching-glob (pattern)
+  "Kill all buffers whose file names match the given glob PATTERN.
+Example: *.ll"
+  (interactive "sGlob pattern (e.g., *.ll): ")
+  (let* ((regexp (wildcard-to-regexp pattern))
+         (buffers (cl-remove-if-not
+                   (lambda (buf)
+                     (let ((fname (buffer-file-name buf)))
+                       (and fname (string-match-p regexp fname))))
+                   (buffer-list))))
+    (if buffers
+        (progn
+          (dolist (buf buffers)
+            (kill-buffer buf))
+          (message "Killed %d buffers matching: %s" (length buffers) pattern))
+      (message "No buffers matched: %s" pattern))))
+
+(use-package pcmpl-args
+  :defer t)
 
 (setq custom-file (make-temp-file "custom.el"))
