@@ -177,30 +177,6 @@
               markdown-fontify-code-blocks-natively t)
   :config (set-face-underline 'markdown-line-break-face nil))
 
-(use-package dashboard
-  :if (display-graphic-p)
-  :config
-  (dashboard-setup-startup-hook)
-  (setq dashboard-startupify-list '(dashboard-insert-banner
-                                    dashboard-insert-newline
-                                    dashboard-insert-banner-title
-                                    dashboard-insert-newline
-                                    dashboard-insert-init-info))
-  (setq dashboard-banner-logo-title "你枉读诗书习经典，岂不知非礼勿能言。")
-  (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
-
-(use-package auctex
-  :if (display-graphic-p)
-  :with "xetex"
-  :defer t
-  :init
-  (setq-default TeX-engine 'xetex)
-  (setq TeX-check-TeX nil
-        TeX-parse-self t
-        TeX-source-correlate-method 'synctex
-        TeX-source-correlate-mode t
-        TeX-view-program-list '(("Skim" "open -a Skim.app %o"))))
-
 (use-package flymake
   :ensure nil
   :init (define-fringe-bitmap 'flymake-fringe-indicator
@@ -226,43 +202,17 @@
                 flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
                 flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
 
-(use-package emms
-  :if (display-graphic-p)
-  :defer t
-  :config
-  (emms-all)
-  (setq emms-player-list '(emms-player-mpv)
-        emms-info-functions '(emms-info-native)))
-
 (use-package marginalia
   :hook (after-init . marginalia-mode))
 
 (use-package vertico
   :hook (after-init . vertico-mode))
 
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns x))
-  :config
-  (exec-path-from-shell-initialize))
-
 (use-package magit
   :defer t)
 
 (use-package valign
   :defer t)
-
-(when (display-graphic-p)
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (org . t)
-   (lilypond . t)))
-
-(setq org-babel-lilypond-commands
-      '("/opt/homebrew/bin/lilypond" "open" "open"))
-
-(setq org-babel-lilypond-ly-command
-      "/opt/homebrew/bin/lilypond"))
 
 (defun kill-buffers-matching-glob (pattern)
   "Kill all buffers whose file names match the given glob PATTERN.
@@ -284,16 +234,7 @@ Example: *.ll"
 (use-package pcmpl-args
   :defer t)
 
-(use-package ox-reveal
-  :if (display-graphic-p)
-  :config
-  (setq org-reveal-root "file:///Users/zhixiaozhang/src/reveal.js/"))
-
 (use-package olivetti
-  :defer t)
-
-(use-package vterm
-  :if (display-graphic-p)
   :defer t)
 
 (defun eshell-here ()
@@ -318,16 +259,6 @@ directory to make multiple eshell windows easier."
   (insert "exit")
   (eshell-send-input)
   (delete-window))
-
-(when (display-graphic-p)
-  (setq dired-guess-shell-alist-user
-        '(("\\.pdf\\'" "open -a Skim")))
-
-(with-eval-after-load 'org
-  (add-to-list 'org-file-apps '("\\.pdf\\'" . "open -a Skim %s"))))
-
-(setq delete-by-moving-to-trash t
-      dired-dwim-target t)
 
 (add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
 
