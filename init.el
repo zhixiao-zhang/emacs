@@ -1,4 +1,18 @@
 ;; -*- lexical-binding: t; -*-
+(define-advice use-package
+    (:around (orig package &rest body) use-with-binary)
+  (let ((executable (plist-get body :with)))
+    (when executable
+      (setq body (seq-difference body `(:with ,executable))))
+    (if (or (not executable) (executable-find executable))
+        (apply orig package body))))
+
+(use-package org
+  :load-path "~/.emacs.d/elpa/org-mode/lisp/"
+  :config
+  (add-hook 'org-mode-hook 'org-latex-preview-mode)
+  (setq org-latex-preview-live t))
+
 (defun my/apply-font-settings (frame)
   (with-selected-frame frame
     (when (display-graphic-p)
@@ -44,6 +58,11 @@
   (while (looking-at "\\s-")
     (delete-char 1)))
 
+(defun open-reading-list ()
+  "Open my reading list file"
+  (interactive)
+  (find-file "~/Documents/academic/reading-list.org"))
+
 (global-set-key (kbd "C-c i") 'open-init-file)
 (global-set-key (kbd "C-c d") 'my-delete-space-to-next-char)
 (global-set-key (kbd "C-c h") 'windmove-left)
@@ -52,6 +71,8 @@
 (global-set-key (kbd "C-c l") 'windmove-right)
 (global-set-key (kbd "M-《") 'beginning-of-buffer)
 (global-set-key (kbd "M-》") 'end-of-buffer)
+(global-set-key (kbd "C-c r") 'open-reading-list)
+(global-set-key (kbd "C-x C-u") 'undo-redo)
 
 (with-eval-after-load 'package
 	(add-to-list 'package-archives
@@ -59,14 +80,6 @@
 
 (eval-when-compile
 	(require 'use-package))
-
-(define-advice use-package
-    (:around (orig package &rest body) use-with-binary)
-  (let ((executable (plist-get body :with)))
-    (when executable
-      (setq body (seq-difference body `(:with ,executable))))
-    (if (or (not executable) (executable-find executable))
-        (apply orig package body))))
 
 (setq use-package-always-ensure t)
 
@@ -135,7 +148,6 @@
               ([escape] . corfu-quit)))
 
 (use-package yasnippet
-  :defer t
   :hook (prog-mode . yas-minor-mode))
 
 (use-package yasnippet-snippets
@@ -166,6 +178,7 @@
   :config (set-face-underline 'markdown-line-break-face nil))
 
 (use-package dashboard
+  :if (display-graphic-p)
   :config
   (dashboard-setup-startup-hook)
   (setq dashboard-startupify-list '(dashboard-insert-banner
@@ -177,6 +190,7 @@
   (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
 
 (use-package auctex
+  :if (display-graphic-p)
   :with "xetex"
   :defer t
   :init
@@ -213,6 +227,7 @@
                 flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
 
 (use-package emms
+  :if (display-graphic-p)
   :defer t
   :config
   (emms-all)
@@ -236,10 +251,7 @@
 (use-package valign
   :defer t)
 
-(use-package org :load-path "~/.emacs.d/elpa/org-mode/lisp/"
-  :config
-  (org-latex-preview-auto-mode))
-
+(when (display-graphic-p)
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
@@ -250,7 +262,7 @@
       '("/opt/homebrew/bin/lilypond" "open" "open"))
 
 (setq org-babel-lilypond-ly-command
-      "/opt/homebrew/bin/lilypond")
+      "/opt/homebrew/bin/lilypond"))
 
 (defun kill-buffers-matching-glob (pattern)
   "Kill all buffers whose file names match the given glob PATTERN.
@@ -271,5 +283,52 @@ Example: *.ll"
 
 (use-package pcmpl-args
   :defer t)
+
+(use-package ox-reveal
+  :if (display-graphic-p)
+  :config
+  (setq org-reveal-root "file:///Users/zhixiaozhang/src/reveal.js/"))
+
+(use-package olivetti
+  :defer t)
+
+(use-package vterm
+  :if (display-graphic-p)
+  :defer t)
+
+(defun eshell-here ()
+  "Opens up a new shell in the directory associated with the
+current buffer's file. The eshell is renamed to match that
+directory to make multiple eshell windows easier."
+  (interactive)
+  (let* ((parent (if (buffer-file-name)
+                     (file-name-directory (buffer-file-name))
+                   default-directory))
+         (height (/ (window-total-height) 3))
+         (name   (car (last (split-string parent "/" t)))))
+    (split-window-vertically (- height))
+    (other-window 1)
+    (eshell "new")
+    (rename-buffer (concat "*eshell: " name "*"))
+
+    (insert (concat "ls"))
+    (eshell-send-input)))
+
+(defun eshell/x ()
+  (insert "exit")
+  (eshell-send-input)
+  (delete-window))
+
+(when (display-graphic-p)
+  (setq dired-guess-shell-alist-user
+        '(("\\.pdf\\'" "open -a Skim")))
+
+(with-eval-after-load 'org
+  (add-to-list 'org-file-apps '("\\.pdf\\'" . "open -a Skim %s"))))
+
+(setq delete-by-moving-to-trash t
+      dired-dwim-target t)
+
+(add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
 
 (setq custom-file (make-temp-file "custom.el"))
