@@ -336,4 +336,27 @@ directory to make multiple eshell windows easier."
 
 (add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
 
+(setq isearch-lazy-count t
+      lazy-count-prefix-format "(%s/%s) "
+      lazy-count-suffix-format nil)
+
+(use-package wgrep
+  :defer t)
+
+(use-package consult
+  :defer t)
+
+(use-package embark
+  :defer t
+  :bind
+  (("C-." . embark-act))
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+(use-package embark-consult)
+
 (setq custom-file (make-temp-file "custom.el"))
