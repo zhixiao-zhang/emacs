@@ -69,10 +69,7 @@
 (global-set-key (kbd "C-c n") 'windmove-down)
 (global-set-key (kbd "C-c p") 'windmove-up)
 (global-set-key (kbd "C-c l") 'windmove-right)
-(global-set-key (kbd "M-《") 'beginning-of-buffer)
-(global-set-key (kbd "M-》") 'end-of-buffer)
-(global-set-key (kbd "C-c r") 'open-reading-list)
-(global-set-key (kbd "C-x C-u") 'undo-redo)
+(global-set-key (kbd "C-c C-r") 'open-reading-list)
 
 (with-eval-after-load 'package
 	(add-to-list 'package-archives
@@ -109,11 +106,16 @@
 
 (use-package eglot
   :defer t
-  :hook ((c-ts-mode c++-ts-mode python-ts-mode) . eglot-ensure)
+  :hook ((c-ts-mode c++-ts-mode python-ts-mode rust-ts-mode) . eglot-ensure)
   :bind (("C-c m" . eglot-format)
          ("C-c r" . eglot-rename))
   :config
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio")))
+  (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer" :initializationOptions
+                                                        ( :procMacro (:enable t)
+                                                          :cargo ( :buildscript (:enable t)
+                                                                   :features "all")))))
+  
   (with-eval-after-load 'eglot
     (let ((clangd-args '("clangd"
                          "--background-index"
@@ -159,10 +161,10 @@
   :config
   (require 'llvm))
 
-(use-package eglot-booster
-  :ensure nil
-  :after eglot
-  :config (eglot-booster-mode))
+;; (use-package eglot-booster
+;;   :ensure nil
+;;   :after eglot
+;;   :config (eglot-booster-mode))
 
 (use-package markdown-mode
   :defer t
@@ -289,11 +291,6 @@ Example: *.ll"
 (use-package pcmpl-args
   :defer t)
 
-(use-package ox-reveal
-  :if (display-graphic-p)
-  :config
-  (setq org-reveal-root "file:///Users/zhixiaozhang/src/reveal.js/"))
-
 (use-package olivetti
   :defer t)
 
@@ -324,12 +321,11 @@ directory to make multiple eshell windows easier."
   (eshell-send-input)
   (delete-window))
 
-(when (display-graphic-p)
-  (setq dired-guess-shell-alist-user
+(setq dired-guess-shell-alist-user
         '(("\\.pdf\\'" "open -a Skim")))
 
 (with-eval-after-load 'org
-  (add-to-list 'org-file-apps '("\\.pdf\\'" . "open -a Skim %s"))))
+  (add-to-list 'org-file-apps '("\\.pdf\\'" . "open -a Skim %s")))
 
 (setq delete-by-moving-to-trash t
       dired-dwim-target t)
@@ -358,5 +354,11 @@ directory to make multiple eshell windows easier."
                  (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult)
+
+(use-package tuareg
+  :defer t)
+
+(use-package rust-mode
+  :defer t)
 
 (setq custom-file (make-temp-file "custom.el"))
