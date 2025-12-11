@@ -222,16 +222,11 @@
                 flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
                 flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
 
-(use-package eldoc-box
-  :defer t
-  :hook ((eglot-managed-mode . eldoc-box-hover-mode)
-         (eldoc-mode . eldoc-box-hover-mode))
-  :config
-  (set-face-attribute 'eldoc-box-body nil
-                      :foreground "#000000"
-                      :background "#FEF3C7")
-  (setq eldoc-box-max-pixel-width 500)
-  (setq eldoc-box-max-pixel-height 300))
+(use-package eldoc
+  :ensure nil
+  :config (setq eldoc-echo-area-display-truncation-message nil
+                eldoc-echo-area-use-multiline-p nil
+                eldoc-echo-area-prefer-doc-buffer 'maybe))
 
 (use-package emms
   :if (display-graphic-p)
