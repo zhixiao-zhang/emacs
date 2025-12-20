@@ -11,14 +11,15 @@
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
   :config
   (add-hook 'org-mode-hook 'org-latex-preview-mode)
-  (setq org-latex-preview-live t))
+  (setq org-latex-preview-live t
+        org-return-follows-link t))
 
 (defun my/apply-font-settings (frame)
   (with-selected-frame frame
     (when (display-graphic-p)
       (let* ((font-size 19)
              (latin-font (cond ((eq system-type 'darwin) "SF Mono")
-                               ((eq system-type 'gnu/linux) "SFMono")
+                               ((eq system-type 'gnu/linux) "SFMono Nerd Font Mono")
                                (t nil)))
              (cjk-font (when (member "LXGW WenKai" (font-family-list))
                          "LXGW WenKai")))
@@ -355,5 +356,25 @@ directory to make multiple eshell windows easier."
 
 (use-package rust-mode
   :defer t)
+
+(use-package org-roam
+  :defer t
+  :custom
+  (org-roam-directory (file-truename "~/Documents/notes"))
+  :bind (("C-c b l" . org-roam-buffer-toggle)
+         ("C-c b f" . org-roam-node-find)
+         ("C-c b g" . org-roam-graph)
+         ("C-c b i" . org-roam-node-insert))
+  :config
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  (org-roam-db-autosync-mode))
+
+(use-package org-ref
+  :defer t)
+
+(use-package org-roam-bibtex
+  :after org-roam
+  :config
+  (require 'org-ref))
 
 (setq custom-file (make-temp-file "custom.el"))
