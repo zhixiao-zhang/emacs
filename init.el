@@ -377,4 +377,14 @@ directory to make multiple eshell windows easier."
   :config
   (require 'org-ref))
 
+(let* ((profile-file (expand-file-name "mail-profile" user-emacs-directory))
+       (profile (when (file-exists-p profile-file)
+                  (string-trim (with-temp-buffer
+                                 (insert-file-contents profile-file)
+                                 (buffer-string))))))
+  (pcase profile
+    ("school"   (load (expand-file-name "lisp/mail-school.el" user-emacs-directory) t))
+    ("personal" (load (expand-file-name "lisp/mail-personal.el" user-emacs-directory) t))
+    (_ nil)))
+
 (setq custom-file (make-temp-file "custom.el"))
