@@ -359,8 +359,20 @@ directory to make multiple eshell windows easier."
 
 (use-package org-roam
   :defer t
-  :custom
-  (org-roam-directory (file-truename "~/Documents/notes"))
+  :init
+  (setq org-roam-directory "~/Documents/Notes/"
+        org-roam-capture-templates
+        '(("c" "computer science" plain "%?"
+           :target
+           (file+head "cs/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+           :unnarrowed t)
+          ("s" "sociology" plain "%?"
+           (file+head "sociology/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+           :unnarrowed t)
+          ("o" "misc" plain "%?"
+           :target
+           (file+head "misc/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+           :unnarrowed t)))
   :bind (("C-c b l" . org-roam-buffer-toggle)
          ("C-c b f" . org-roam-node-find)
          ("C-c b g" . org-roam-graph)
@@ -370,12 +382,26 @@ directory to make multiple eshell windows easier."
   (org-roam-db-autosync-mode))
 
 (use-package org-ref
-  :defer t)
+  :defer t
+  :config
+  (setq org-ref-default-bibliography '("~/Documents/Notes/refs/papers.lib")))
 
 (use-package org-roam-bibtex
   :after org-roam
   :config
-  (require 'org-ref))
+  (org-roam-bibtex-mode 1)
+  (setq orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "year"))
+  (add-to-list 'org-roam-capture-templates
+               '("r" "bibliography reference" plain "%?"
+                 :target (file+head "refs/${citekey}.org"
+                                    "#+title: ${title}\n#+filetags: :Article:\n\n"))))
+
+(use-package helm-bibtex
+  :defer t
+  :custom
+  (bibtex-completion-bibliography '("~/Documents/Notes/refs/papers.bib"))
+  (bibtex-completion-library-path '("~/Papers/"))
+  (bibtex-completion-notes-path "~/Documents/Notes/refs/"))
 
 (let* ((profile-file (expand-file-name "mail-profile" user-emacs-directory))
        (profile (when (file-exists-p profile-file)
