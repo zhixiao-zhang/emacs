@@ -413,4 +413,7 @@ directory to make multiple eshell windows easier."
     ("personal" (load (expand-file-name "lisp/mail-personal.el" user-emacs-directory) t))
     (_ nil)))
 
+(use-package org-roam-ui
+  :after org-roam)
+
 (setq custom-file (make-temp-file "custom.el"))
