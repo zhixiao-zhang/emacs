@@ -17,7 +17,7 @@
 (defun my/apply-font-settings (frame)
   (with-selected-frame frame
     (when (display-graphic-p)
-      (let* ((font-size 19)
+      (let* ((font-size 18)
              (latin-font (cond ((eq system-type 'darwin) "SF Mono")
                                ((eq system-type 'gnu/linux) "SFMono Nerd Font Mono")
                                (t nil)))
@@ -369,6 +369,10 @@ directory to make multiple eshell windows easier."
           ("s" "sociology" plain "%?"
            (file+head "sociology/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
            :unnarrowed t)
+          ("e" "english" plain "%?"
+           :target
+           (file+head "english/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+           :unnarrowed t)          
           ("o" "misc" plain "%?"
            :target
            (file+head "misc/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
@@ -415,5 +419,12 @@ directory to make multiple eshell windows easier."
 
 (use-package org-roam-ui
   :after org-roam)
+
+(use-package gptel
+  :config
+  (setq gptel-model 'deepseek-reasoner
+        gptel-backend (gptel-make-deepseek "DeepSeek"
+                                           :stream t
+                                           :key #'gptel-api-key-from-auth-source)))
 
 (setq custom-file (make-temp-file "custom.el"))
