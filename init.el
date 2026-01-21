@@ -367,6 +367,7 @@ directory to make multiple eshell windows easier."
            (file+head "cs/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
            :unnarrowed t)
           ("s" "sociology" plain "%?"
+           :target
            (file+head "sociology/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
            :unnarrowed t)
           ("e" "english" plain "%?"
