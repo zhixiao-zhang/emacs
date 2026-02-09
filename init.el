@@ -428,4 +428,12 @@ directory to make multiple eshell windows easier."
                                            :stream t
                                            :key #'gptel-api-key-from-auth-source)))
 
+(use-package pdf-tools
+  :defer t
+  :init
+  (defvar org-format-latex-header "")
+  (pdf-tools-install)
+  :config
+  (setq-default pdf-view-display-size 'fit-page))
+
 (setq custom-file (make-temp-file "custom.el"))
