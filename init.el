@@ -60,7 +60,7 @@
     (delete-char 1)))
 
 (defun open-reading-list ()
-  "Open my reading list file"
+  "Open my reading list file."
   (interactive)
   (find-file "~/Documents/academic/reading-list.org"))
 
@@ -105,44 +105,15 @@
   (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
   (with-eval-after-load 'c++-ts-mode))
 
-(use-package eglot
-  :defer t
-  :hook ((c-ts-mode c++-ts-mode python-ts-mode rust-ts-mode) . eglot-ensure)
-  :bind (("C-c m" . eglot-format)
-         ("C-c r" . eglot-rename))
-  :config
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio")))
-  (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer" :initializationOptions
-                                                        ( :procMacro (:enable t)
-                                                          :cargo ( :buildscript (:enable t)
-                                                                   :features "all")))))
-  
-  (with-eval-after-load 'eglot
-    (let ((clangd-args '("clangd"
-                         "--background-index"
-                         "--clang-tidy"
-                         "--clang-tidy-checks=performance-*,bugprone-*"
-                         "--all-scopes-completion"
-                         "--completion-style=detailed"
-                         "--header-insertion=iwyu"
-                         "--pch-storage=disk")))
-      (dolist (mode '(c-ts-mode c++-ts-mode))
-        (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
+    ;; (let ((clangd-args '("clangd"
+    ;;                      "--background-index"
+    ;;                      "--clang-tidy"
+    ;;                      "--clang-tidy-checks=performance-*,bugprone-*"
+    ;;                      "--all-scopes-completion"
+    ;;                      "--completion-style=detailed"
+    ;;                      "--header-insertion=iwyu"
+    ;;                      "--pch-storage=disk")))
 
-(use-package corfu
-  :defer t
-  :hook (after-init . global-corfu-mode)
-  :init (setq corfu-auto t
-              corfu-cycle t
-              corfu-quit-no-match 'separator
-              corfu-preselect 'prompt)
-  :config (add-hook 'eshell-mode (lambda ()
-                                   (setq-local corfu-auto nil)))
-  :bind (:map corfu-map
-              ([tab] . corfu-next)
-              ([backtab] . corfu-previous)
-              ([return] . corfu-send)
-              ([escape] . corfu-quit)))
 
 (use-package yasnippet
   :hook (prog-mode . yas-minor-mode))
@@ -161,11 +132,6 @@
                           (add-to-list 'c-default-style '(c++-ts-mode . "llvm.org")))))
   :config
   (require 'llvm))
-
-;; (use-package eglot-booster
-;;   :ensure nil
-;;   :after eglot
-;;   :config (eglot-booster-mode))
 
 (use-package markdown-mode
   :defer t
@@ -197,37 +163,6 @@
         TeX-source-correlate-method 'synctex
         TeX-source-correlate-mode t
         TeX-view-program-list '(("Skim" "open -a Skim.app %o"))))
-
-(use-package flymake
-  :ensure nil
-  :init (define-fringe-bitmap 'flymake-fringe-indicator
-          (vector #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00011100
-                  #b00111110
-                  #b00111110
-                  #b00111110
-                  #b00011100
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000))
-  :config (setq flymake-indicator-type 'fringes
-                flymake-note-bitmap '(flymake-fringe-indicator compilation-info)
-                flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
-                flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
-
-(use-package eldoc
-  :ensure nil
-  :config (setq eldoc-echo-area-display-truncation-message nil
-                eldoc-echo-area-use-multiline-p nil
-                eldoc-echo-area-prefer-doc-buffer 'maybe))
 
 (use-package emms
   :if (display-graphic-p)
@@ -373,7 +308,7 @@ directory to make multiple eshell windows easier."
           ("e" "english" plain "%?"
            :target
            (file+head "english/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-           :unnarrowed t)          
+           :unnarrowed t)
           ("o" "misc" plain "%?"
            :target
            (file+head "misc/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
@@ -435,5 +370,59 @@ directory to make multiple eshell windows easier."
   (pdf-tools-install)
   :config
   (setq-default pdf-view-display-size 'fit-page))
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
+(use-package company
+  :ensure t
+  :defines (company-dabbrev-ignore-case company-dabbrev-downcase)
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0)
+  (company-tooltip-align-annotations t)
+  (company-global-modes '(not erc-mode message-mode help-mode gud-mode))
+  :hook (prog-mode . company-mode))
+
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c c")
+  (setq lsp-diagnostics-provider :flymake)
+  :hook (
+         (c-ts-mode          . lsp-deferred)
+         (c++-ts-mode        . lsp-deferred)
+         (rust-ts-mode       . lsp-deferred)
+         (python-ts-mode     . lsp-deferred))
+  :custom
+  (lsp-clients-clangd-args '("--header-insertion=never"
+                             "--background-index"
+                             "--clang-tidy"
+                             "--completion-style=detailed"))
+  (lsp-headerline-breadcrumb-enable t)
+  (lsp-lens-enable t)
+  (lsp-completion-provider :capf)
+  :commands (lsp lsp-deferred))
+
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-doc-enable t)
+  (lsp-ui-doc-position 'at-point)
+  (lsp-ui-doc-header t)
+  (lsp-ui-doc-border "white")
+
+  (lsp-ui-sideline-enable t)
+  (lsp-ui-sideline-show-code-actions t)
+  (lsp-ui-sideline-show-hover t)
+
+  (lsp-ui-peek-enable t)
+  (lsp-ui-peek-fontify 'on-demand))
+
+(use-package lean4-mode
+  :commands lean4-mode
+  :vc (:url "https://github.com/leanprover-community/lean4-mode.git"
+       :rev :last-release
+       ))
 
 (setq custom-file (make-temp-file "custom.el"))
