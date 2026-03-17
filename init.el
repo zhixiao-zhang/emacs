@@ -7,27 +7,42 @@
     (if (or (not executable) (executable-find executable))
         (apply orig package body))))
 
-(use-package org
-  :load-path "~/.emacs.d/elpa/org-mode/lisp/"
-  :config
-  (add-hook 'org-mode-hook 'org-latex-preview-mode)
-  (setq org-latex-preview-live t
-        org-return-follows-link t))
+(set-charset-priority 'unicode)
+(set-language-environment "UTF-8")
+(set-default-coding-systems 'utf-8)
+(set-buffer-file-coding-system 'utf-8)
+(set-file-name-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
 
 (defun my/apply-font-settings (frame)
   (with-selected-frame frame
     (when (display-graphic-p)
-      (let* ((font-size 18)
+      (let* ((font-size 20)
+             (font-weight 'semibold)
              (latin-font (cond ((eq system-type 'darwin) "SF Mono")
                                ((eq system-type 'gnu/linux) "SFMono Nerd Font Mono")
+                               ((eq system-type 'windows-nt)
+                                (cond ((member "SF Mono" (font-family-list)) "SF Mono")
+                                      (t "Consolas")))
                                (t nil)))
-             (cjk-font (when (member "LXGW WenKai" (font-family-list))
-                         "LXGW WenKai")))
+             (cjk-font (or (cl-find-if (lambda (f) (member f (font-family-list)))
+                                      '("LXGW WenKai" "LXGW WenKai Screen" "微软雅黑" "宋体"))
+                           nil)))
+
         (when latin-font
-          (set-frame-font (format "%s-%d" latin-font font-size) t t))
+          (set-face-attribute 'default nil
+                              :font (font-spec :family latin-font
+                                             :size font-size
+                                             :weight font-weight)))
+
         (when cjk-font
-          (dolist (charset '(kana han cjk-misc bopomofo))
-            (set-fontset-font t charset (font-spec :family cjk-font :size font-size))))))))
+          (let ((cjk-spec (font-spec :family cjk-font
+                                   :size font-size
+                                   :weight font-weight)))
+            (dolist (charset '(kana han cjk-misc bopomofo))
+              (set-fontset-font t charset cjk-spec))))))))
 
 (add-hook 'after-make-frame-functions #'my/apply-font-settings)
 
@@ -59,11 +74,6 @@
   (while (looking-at "\\s-")
     (delete-char 1)))
 
-(defun open-reading-list ()
-  "Open my reading list file"
-  (interactive)
-  (find-file "~/Documents/academic/reading-list.org"))
-
 (global-set-key (kbd "C-c i") 'open-init-file)
 (global-set-key (kbd "C-c d") 'my-delete-space-to-next-char)
 (global-set-key (kbd "C-c h") 'windmove-left)
@@ -93,79 +103,9 @@
   (setq completion-styles '(orderless)
         completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package treesit-auto
-  :defer t
-  :hook
-  (prog-mode . global-treesit-auto-mode)
-  :init
-  (setq treesit-font-lock-level 4)
-  :config
-  (dolist (remap '((html-mode . mhtml-mode)))
-    (add-to-list 'major-mode-remap-alist remap))
-  (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
-  (with-eval-after-load 'c++-ts-mode))
-
-(use-package eglot
-  :defer t
-  :hook ((c-ts-mode c++-ts-mode python-ts-mode rust-ts-mode) . eglot-ensure)
-  :bind (("C-c m" . eglot-format)
-         ("C-c r" . eglot-rename))
-  :config
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio")))
-  (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer" :initializationOptions
-                                                        ( :procMacro (:enable t)
-                                                          :cargo ( :buildscript (:enable t)
-                                                                   :features "all")))))
-  
-  (with-eval-after-load 'eglot
-    (let ((clangd-args '("clangd"
-                         "--background-index"
-                         "--clang-tidy"
-                         "--clang-tidy-checks=performance-*,bugprone-*"
-                         "--all-scopes-completion"
-                         "--completion-style=detailed"
-                         "--header-insertion=iwyu"
-                         "--pch-storage=disk")))
-      (dolist (mode '(c-ts-mode c++-ts-mode))
-        (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
-
-(use-package corfu
-  :defer t
-  :hook (after-init . global-corfu-mode)
-  :init (setq corfu-auto t
-              corfu-cycle t
-              corfu-quit-no-match 'separator
-              corfu-preselect 'prompt)
-  :config (add-hook 'eshell-mode (lambda ()
-                                   (setq-local corfu-auto nil)))
-  :bind (:map corfu-map
-              ([tab] . corfu-next)
-              ([backtab] . corfu-previous)
-              ([return] . corfu-send)
-              ([escape] . corfu-quit)))
-
-(use-package yasnippet
-  :hook (prog-mode . yas-minor-mode))
-
-(use-package yasnippet-snippets
-  :after yasnippet)
-
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
 (require 'org-templates)
-
-(use-package cc-mode
-  :hook ((c-ts-mode . (lambda ()
-                        (add-to-list 'c-default-style '(c-ts-mode . "llvm.org"))))
-         (c++-ts-mode . (lambda ()
-                          (add-to-list 'c-default-style '(c++-ts-mode . "llvm.org")))))
-  :config
-  (require 'llvm))
-
-;; (use-package eglot-booster
-;;   :ensure nil
-;;   :after eglot
-;;   :config (eglot-booster-mode))
 
 (use-package markdown-mode
   :defer t
@@ -186,67 +126,11 @@
   (setq dashboard-banner-logo-title "你枉读诗书习经典，岂不知非礼勿能言。")
   (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
 
-(use-package auctex
-  :if (display-graphic-p)
-  :with "xetex"
-  :defer t
-  :init
-  (setq-default TeX-engine 'xetex)
-  (setq TeX-check-TeX nil
-        TeX-parse-self t
-        TeX-source-correlate-method 'synctex
-        TeX-source-correlate-mode t
-        TeX-view-program-list '(("Skim" "open -a Skim.app %o"))))
-
-(use-package flymake
-  :ensure nil
-  :init (define-fringe-bitmap 'flymake-fringe-indicator
-          (vector #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00011100
-                  #b00111110
-                  #b00111110
-                  #b00111110
-                  #b00011100
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000
-                  #b00000000))
-  :config (setq flymake-indicator-type 'fringes
-                flymake-note-bitmap '(flymake-fringe-indicator compilation-info)
-                flymake-warning-bitmap '(flymake-fringe-indicator compilation-warning)
-                flymake-error-bitmap '(flymake-fringe-indicator compilation-error)))
-
-(use-package eldoc
-  :ensure nil
-  :config (setq eldoc-echo-area-display-truncation-message nil
-                eldoc-echo-area-use-multiline-p nil
-                eldoc-echo-area-prefer-doc-buffer 'maybe))
-
-(use-package emms
-  :if (display-graphic-p)
-  :defer t
-  :config
-  (emms-all)
-  (setq emms-player-list '(emms-player-mpv)
-        emms-info-functions '(emms-info-native)))
-
 (use-package marginalia
   :hook (after-init . marginalia-mode))
 
 (use-package vertico
   :hook (after-init . vertico-mode))
-
-(use-package exec-path-from-shell
-  :if (memq window-system '(mac ns x))
-  :config
-  (exec-path-from-shell-initialize))
 
 (use-package magit
   :defer t)
@@ -254,108 +138,14 @@
 (use-package valign
   :defer t)
 
-(when (display-graphic-p)
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (org . t)
-   (lilypond . t)))
-
-(setq org-babel-lilypond-commands
-      '("/opt/homebrew/bin/lilypond" "open" "open"))
-
-(setq org-babel-lilypond-ly-command
-      "/opt/homebrew/bin/lilypond"))
-
-(defun kill-buffers-matching-glob (pattern)
-  "Kill all buffers whose file names match the given glob PATTERN.
-Example: *.ll"
-  (interactive "sGlob pattern (e.g., *.ll): ")
-  (let* ((regexp (wildcard-to-regexp pattern))
-         (buffers (cl-remove-if-not
-                   (lambda (buf)
-                     (let ((fname (buffer-file-name buf)))
-                       (and fname (string-match-p regexp fname))))
-                   (buffer-list))))
-    (if buffers
-        (progn
-          (dolist (buf buffers)
-            (kill-buffer buf))
-          (message "Killed %d buffers matching: %s" (length buffers) pattern))
-      (message "No buffers matched: %s" pattern))))
-
-(use-package pcmpl-args
-  :defer t)
-
 (use-package olivetti
   :defer t)
-
-(use-package vterm
-  :if (display-graphic-p)
-  :defer t)
-
-(defun eshell-here ()
-  "Opens up a new shell in the directory associated with the
-current buffer's file. The eshell is renamed to match that
-directory to make multiple eshell windows easier."
-  (interactive)
-  (let* ((parent (if (buffer-file-name)
-                     (file-name-directory (buffer-file-name))
-                   default-directory))
-         (height (/ (window-total-height) 3))
-         (name   (car (last (split-string parent "/" t)))))
-    (split-window-vertically (- height))
-    (other-window 1)
-    (eshell "new")
-    (rename-buffer (concat "*eshell: " name "*"))
-
-    (insert (concat "ls"))
-    (eshell-send-input)))
-
-(defun eshell/x ()
-  (insert "exit")
-  (eshell-send-input)
-  (delete-window))
-
-(setq dired-guess-shell-alist-user
-        '(("\\.pdf\\'" "open -a Skim")))
-
-(with-eval-after-load 'org
-  (add-to-list 'org-file-apps '("\\.pdf\\'" . "open -a Skim %s")))
-
-(setq delete-by-moving-to-trash t
-      dired-dwim-target t)
 
 (add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
 
 (setq isearch-lazy-count t
       lazy-count-prefix-format "(%s/%s) "
       lazy-count-suffix-format nil)
-
-(use-package wgrep
-  :defer t)
-
-(use-package consult
-  :defer t)
-
-(use-package embark
-  :defer t
-  :bind
-  (("C-." . embark-act))
-  :config
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-
-(use-package embark-consult)
-
-(use-package tuareg
-  :defer t)
-
-(use-package rust-mode
-  :defer t)
 
 (use-package org-roam
   :defer t
@@ -386,54 +176,19 @@ directory to make multiple eshell windows easier."
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   (org-roam-db-autosync-mode))
 
-(use-package org-ref
-  :defer t
-  :config
-  (setq org-ref-default-bibliography '("~/Documents/Notes/refs/papers.lib")))
-
-(use-package org-roam-bibtex
-  :after org-roam
-  :config
-  (org-roam-bibtex-mode 1)
-  (setq orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "year"))
-  (add-to-list 'org-roam-capture-templates
-               '("r" "bibliography reference" plain "%?"
-                 :target (file+head "refs/${citekey}.org"
-                                    "#+title: ${title}\n#+filetags: :Article:\n\n"))))
-
-(use-package helm-bibtex
-  :defer t
-  :custom
-  (bibtex-completion-bibliography '("~/Documents/Notes/refs/papers.bib"))
-  (bibtex-completion-library-path '("~/Papers/"))
-  (bibtex-completion-notes-path "~/Documents/Notes/refs/"))
-
-(let* ((profile-file (expand-file-name "mail-profile" user-emacs-directory))
-       (profile (when (file-exists-p profile-file)
-                  (string-trim (with-temp-buffer
-                                 (insert-file-contents profile-file)
-                                 (buffer-string))))))
-  (pcase profile
-    ("school"   (load (expand-file-name "lisp/mail-school.el" user-emacs-directory) t))
-    ("personal" (load (expand-file-name "lisp/mail-personal.el" user-emacs-directory) t))
-    (_ nil)))
-
 (use-package org-roam-ui
   :after org-roam)
 
-(use-package gptel
-  :config
-  (setq gptel-model 'deepseek-reasoner
-        gptel-backend (gptel-make-deepseek "DeepSeek"
-                                           :stream t
-                                           :key #'gptel-api-key-from-auth-source)))
-
-(use-package pdf-tools
+(use-package auctex
+  :if (display-graphic-p)
+  :with "xetex"
   :defer t
   :init
-  (defvar org-format-latex-header "")
-  (pdf-tools-install)
-  :config
-  (setq-default pdf-view-display-size 'fit-page))
+  (setq-default TeX-engine 'xetex)
+  (setq TeX-check-TeX nil
+        TeX-parse-self t
+        TeX-source-correlate-method 'synctex
+        TeX-source-correlate-mode t
+        TeX-view-program-list '(("Skim" "open -a Skim.app %o"))))
 
 (setq custom-file (make-temp-file "custom.el"))
