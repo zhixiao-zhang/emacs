@@ -1,11 +1,5 @@
 ;; -*- lexical-binding: t; -*-
-(define-advice use-package
-    (:around (orig package &rest body) use-with-binary)
-  (let ((executable (plist-get body :with)))
-    (when executable
-      (setq body (seq-difference body `(:with ,executable))))
-    (if (or (not executable) (executable-find executable))
-        (apply orig package body))))
+(load (expand-file-name "lisp/zz-core" user-emacs-directory))
 
 (use-package org
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
@@ -71,15 +65,6 @@
 (global-set-key (kbd "C-c p") 'windmove-up)
 (global-set-key (kbd "C-c l") 'windmove-right)
 (global-set-key (kbd "C-c C-r") 'open-reading-list)
-
-(with-eval-after-load 'package
-	(add-to-list 'package-archives
-							 '("melpa" . "https://melpa.org/packages/")))
-
-(eval-when-compile
-	(require 'use-package))
-
-(setq use-package-always-ensure t)
 
 (use-package expand-region
   :defer t
@@ -150,8 +135,6 @@
 (use-package yasnippet-snippets
   :after yasnippet)
 
-(add-to-list 'load-path "~/.emacs.d/lisp/")
-
 (require 'org-templates)
 
 (use-package cc-mode
@@ -187,8 +170,8 @@
   (setq dashboard-startup-banner "~/.emacs.d/dlma.png"))
 
 (use-package auctex
-  :if (display-graphic-p)
-  :with "xetex"
+  :if (and (display-graphic-p)
+           (executable-find "xetex"))
   :defer t
   :init
   (setq-default TeX-engine 'xetex)
@@ -435,5 +418,3 @@ directory to make multiple eshell windows easier."
   (pdf-tools-install)
   :config
   (setq-default pdf-view-display-size 'fit-page))
-
-(setq custom-file (make-temp-file "custom.el"))
