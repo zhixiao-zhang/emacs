@@ -97,6 +97,12 @@
          ("M-=" . er/mark-inside-pairs)
          ("C-M-=" . er/mark-inside-quotes)))
 
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
+  :config
+  (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-envs '("PATH" "CPATH" "LIBRARY_PATH")))
+
 (use-package orderless
   :defer t
   :init
