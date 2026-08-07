@@ -2,13 +2,6 @@
 (load (expand-file-name "lisp/zz-core" user-emacs-directory))
 (require 'zz-ui)
 
-(use-package org
-  :load-path "~/.emacs.d/elpa/org-mode/lisp/"
-  :config
-  (add-hook 'org-mode-hook 'org-latex-preview-mode)
-  (setq org-latex-preview-live t
-        org-return-follows-link t))
-
 (setq backup-directory-alist `((".*" . ,temporary-file-directory))
       auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
@@ -121,11 +114,6 @@
   :config
   (require 'llvm))
 
-;; (use-package eglot-booster
-;;   :ensure nil
-;;   :after eglot
-;;   :config (eglot-booster-mode))
-
 (use-package markdown-mode
   :defer t
   :init (setq markdown-enable-math t
@@ -176,14 +164,6 @@
                 eldoc-echo-area-use-multiline-p nil
                 eldoc-echo-area-prefer-doc-buffer 'maybe))
 
-(use-package emms
-  :if (display-graphic-p)
-  :defer t
-  :config
-  (emms-all)
-  (setq emms-player-list '(emms-player-mpv)
-        emms-info-functions '(emms-info-native)))
-
 (use-package marginalia
   :hook (after-init . marginalia-mode))
 
@@ -195,19 +175,6 @@
 
 (use-package valign
   :defer t)
-
-(when (display-graphic-p)
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (org . t)
-   (lilypond . t)))
-
-(setq org-babel-lilypond-commands
-      '("/opt/homebrew/bin/lilypond" "open" "open"))
-
-(setq org-babel-lilypond-ly-command
-      "/opt/homebrew/bin/lilypond"))
 
 (defun kill-buffers-matching-glob (pattern)
   "Kill all buffers whose file names match the given glob PATTERN.
@@ -232,39 +199,6 @@ Example: *.ll"
 (use-package olivetti
   :defer t)
 
-(use-package vterm
-  :if (display-graphic-p)
-  :defer t)
-
-(defun eshell-here ()
-  "Opens up a new shell in the directory associated with the
-current buffer's file. The eshell is renamed to match that
-directory to make multiple eshell windows easier."
-  (interactive)
-  (let* ((parent (if (buffer-file-name)
-                     (file-name-directory (buffer-file-name))
-                   default-directory))
-         (height (/ (window-total-height) 3))
-         (name   (car (last (split-string parent "/" t)))))
-    (split-window-vertically (- height))
-    (other-window 1)
-    (eshell "new")
-    (rename-buffer (concat "*eshell: " name "*"))
-
-    (insert (concat "ls"))
-    (eshell-send-input)))
-
-(defun eshell/x ()
-  (insert "exit")
-  (eshell-send-input)
-  (delete-window))
-
-(setq dired-guess-shell-alist-user
-        '(("\\.pdf\\'" "open -a Skim")))
-
-(with-eval-after-load 'org
-  (add-to-list 'org-file-apps '("\\.pdf\\'" . "open -a Skim %s")))
-
 (setq delete-by-moving-to-trash t
       dired-dwim-target t)
 
@@ -274,95 +208,6 @@ directory to make multiple eshell windows easier."
       lazy-count-prefix-format "(%s/%s) "
       lazy-count-suffix-format nil)
 
-(use-package wgrep
-  :defer t)
-
-(use-package consult
-  :defer t)
-
-(use-package embark
-  :defer t
-  :bind
-  (("C-." . embark-act))
-  :config
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-
-(use-package embark-consult)
-
-(use-package tuareg
-  :defer t)
-
-(use-package rust-mode
-  :defer t)
-
-(use-package org-roam
-  :defer t
-  :init
-  (setq org-roam-directory "~/Documents/Notes/"
-        org-roam-capture-templates
-        '(("c" "computer science" plain "%?"
-           :target
-           (file+head "cs/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-           :unnarrowed t)
-          ("s" "sociology" plain "%?"
-           :target
-           (file+head "sociology/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-           :unnarrowed t)
-          ("e" "english" plain "%?"
-           :target
-           (file+head "english/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-           :unnarrowed t)          
-          ("o" "misc" plain "%?"
-           :target
-           (file+head "misc/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-           :unnarrowed t)))
-  :bind (("C-c b l" . org-roam-buffer-toggle)
-         ("C-c b f" . org-roam-node-find)
-         ("C-c b g" . org-roam-graph)
-         ("C-c b i" . org-roam-node-insert))
-  :config
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-  (org-roam-db-autosync-mode))
-
-(use-package org-ref
-  :defer t
-  :config
-  (setq org-ref-default-bibliography '("~/Documents/Notes/refs/papers.lib")))
-
-(use-package org-roam-bibtex
-  :after org-roam
-  :config
-  (org-roam-bibtex-mode 1)
-  (setq orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "year"))
-  (add-to-list 'org-roam-capture-templates
-               '("r" "bibliography reference" plain "%?"
-                 :target (file+head "refs/${citekey}.org"
-                                    "#+title: ${title}\n#+filetags: :Article:\n\n"))))
-
-(use-package helm-bibtex
-  :defer t
-  :custom
-  (bibtex-completion-bibliography '("~/Documents/Notes/refs/papers.bib"))
-  (bibtex-completion-library-path '("~/Papers/"))
-  (bibtex-completion-notes-path "~/Documents/Notes/refs/"))
-
-(let* ((profile-file (expand-file-name "mail-profile" user-emacs-directory))
-       (profile (when (file-exists-p profile-file)
-                  (string-trim (with-temp-buffer
-                                 (insert-file-contents profile-file)
-                                 (buffer-string))))))
-  (pcase profile
-    ("school"   (load (expand-file-name "lisp/mail-school.el" user-emacs-directory) t))
-    ("personal" (load (expand-file-name "lisp/mail-personal.el" user-emacs-directory) t))
-    (_ nil)))
-
-(use-package org-roam-ui
-  :after org-roam)
-
 (use-package gptel
   :config
   (setq gptel-model 'deepseek-reasoner
@@ -370,10 +215,26 @@ directory to make multiple eshell windows easier."
                                            :stream t
                                            :key #'gptel-api-key-from-auth-source)))
 
-(use-package pdf-tools
-  :defer t
-  :init
-  (defvar org-format-latex-header "")
-  (pdf-tools-install)
+(use-package ghostel
+  :bind (("C-x m" . ghostel)
+         :map ghostel-semi-char-mode-map
+         ("C-s"  . consult-line)
+         ("C-k"  . my/ghostel-send-C-k-and-kill)
+         ;; I'm used to go up/down the shell history with M-n/p from eshell
+         ;; Simulate this behavior in ghostel by sending C-p and C-n
+         ("M-p" . (lambda () (interactive) (ghostel-send-key "p" "ctrl")))
+         ("M-n" . (lambda () (interactive) (ghostel-send-key "n" "ctrl")))
+         :map project-prefix-map
+         ("m" . ghostel-project)
+         ("M" . ghostel-project-list-buffers))
   :config
-  (setq-default pdf-view-display-size 'fit-page))
+  (defun my/ghostel-send-C-k-and-kill ()
+    "Send `C-k' to ghostel.
+Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
+    (interactive)
+    (kill-ring-save (point) (line-end-position))
+    (ghostel-send-key "k" "ctrl"))
+
+  (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
+  (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
+  (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
