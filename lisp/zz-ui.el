@@ -3,9 +3,9 @@
 (defun my/apply-font-settings (frame)
   (with-selected-frame frame
     (when (display-graphic-p)
-      (let* ((font-size 18)
+      (let* ((font-size 16)
              (latin-font (cond ((eq system-type 'darwin) "SF Mono")
-                               ((eq system-type 'gnu/linux) "SFMono Nerd Font Mono")
+                               ((eq system-type 'gnu/linux) "JetBrains Mono")
                                (t nil)))
              (cjk-font (when (member "LXGW WenKai" (font-family-list))
                          "LXGW WenKai")))

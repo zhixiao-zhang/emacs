@@ -59,29 +59,37 @@
   (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . yaml-ts-mode))
   (with-eval-after-load 'c++-ts-mode))
 
+(defun my/language-server-format ()
+  "Format with the language client managing the current buffer."
+  (interactive)
+  (cond
+   ((bound-and-true-p lsp-bridge-mode)
+    (call-interactively #'lsp-bridge-code-format))
+   ((and (fboundp 'eglot-managed-p) (eglot-managed-p))
+    (call-interactively #'eglot-format))
+   (t (user-error "No language server is managing this buffer"))))
+
+(defun my/language-server-rename ()
+  "Rename with the language client managing the current buffer."
+  (interactive)
+  (cond
+   ((bound-and-true-p lsp-bridge-mode)
+    (call-interactively #'lsp-bridge-rename))
+   ((and (fboundp 'eglot-managed-p) (eglot-managed-p))
+    (call-interactively #'eglot-rename))
+   (t (user-error "No language server is managing this buffer"))))
+
 (use-package eglot
   :defer t
-  :hook ((c-ts-mode c++-ts-mode python-ts-mode rust-ts-mode) . eglot-ensure)
-  :bind (("C-c m" . eglot-format)
-         ("C-c r" . eglot-rename))
+  :commands (eglot eglot-ensure)
+  :bind (("C-c m" . my/language-server-format)
+         ("C-c r" . my/language-server-rename))
   :config
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pyright-langserver" "--stdio")))
   (add-to-list 'eglot-server-programs '(rust-ts-mode . ("rust-analyzer" :initializationOptions
                                                         ( :procMacro (:enable t)
                                                           :cargo ( :buildscript (:enable t)
-                                                                   :features "all")))))
-  
-  (with-eval-after-load 'eglot
-    (let ((clangd-args '("clangd"
-                         "--background-index"
-                         "--clang-tidy"
-                         "--clang-tidy-checks=performance-*,bugprone-*"
-                         "--all-scopes-completion"
-                         "--completion-style=detailed"
-                         "--header-insertion=iwyu"
-                         "--pch-storage=disk")))
-      (dolist (mode '(c-ts-mode c++-ts-mode))
-        (add-to-list 'eglot-server-programs (cons mode clangd-args))))))
+                                                                   :features "all"))))))
 
 (use-package corfu
   :defer t
@@ -120,6 +128,37 @@
               markdown-hide-urls t
               markdown-fontify-code-blocks-natively t)
   :config (set-face-underline 'markdown-line-break-face nil))
+
+(defun my/lsp-bridge-sync-completion-ui ()
+  "Keep Corfu and lsp-bridge's ACM frontend out of the same buffer."
+  (cond
+   ((bound-and-true-p lsp-bridge-mode)
+    (when (bound-and-true-p corfu-mode)
+      (corfu-mode -1)))
+   ((and (bound-and-true-p global-corfu-mode)
+         (fboundp 'corfu-mode))
+    (corfu-mode 1))))
+
+(use-package lsp-bridge
+  :ensure nil
+  :load-path "site-lisp/lsp-bridge"
+  :demand t
+  :hook (lsp-bridge-mode . my/lsp-bridge-sync-completion-ui)
+  :init
+  (setq lsp-bridge-c-lsp-server "clangd"
+        lsp-bridge-python-command "/home/yingxue/.local/share/venvs/lsp-bridge/bin/python"
+        lsp-bridge-disable-backup nil
+        lsp-bridge-enable-with-tramp t
+        lsp-bridge-remote-start-automatically t
+        lsp-bridge-remote-python-command "/home/zhixiao/lsp-bridge/.venv/bin/python"
+        lsp-bridge-remote-python-file "/home/zhixiao/lsp-bridge/lsp_bridge.py"
+        lsp-bridge-remote-log "/tmp/lsp-bridge.log")
+  :config
+  (global-lsp-bridge-mode)
+  ;; Globalized minor modes run after major-mode hooks.  Reconcile once more
+  ;; at the end so `global-corfu-mode' cannot re-enable Corfu in an ACM buffer.
+  (add-hook 'after-change-major-mode-hook
+            #'my/lsp-bridge-sync-completion-ui 90))
 
 (use-package auctex
   :if (and (display-graphic-p)
